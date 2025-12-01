@@ -2,7 +2,7 @@ package taglib
 
 import "core:c"
 
-when ODIN_OS == .Linux || ODIN_OS == .Darwin {@(require) foreign import stdcpp "system:stdc++"}
+when ODIN_OS == .Linux || ODIN_OS == .Darwin { @(require) foreign import stdcpp "system:stdc++" }
 when ODIN_OS == .Windows {
     foreign import TagLib "windows/tag_c.lib"
 } else when ODIN_OS == .Linux {

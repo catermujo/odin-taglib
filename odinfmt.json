@@ -3,5 +3,6 @@
     "tabs": false,
     "tabs_width": 4,
     "newline_style": "LF",
-    "braces_style": "K_And_R"
+    "braces_style": "_1TBS",
+    "space_single_line_blocks": true
 }
