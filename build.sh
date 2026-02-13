@@ -2,7 +2,7 @@
 
 set -e
 
-[ -d taglib ] || git clone --recurse-submodules https://github.com/taglib/taglib --depth=1
+[ -d taglib ] || git clone --recurse-submodules --revision f4117f873c2cdc7b61553ae27df34364340a37ea https://github.com/taglib/taglib --depth=1
 
 echo "Building taglib.."
 cd taglib
