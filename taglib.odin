@@ -2,24 +2,35 @@ package taglib
 
 import "core:c"
 
-when ODIN_OS == .Linux || ODIN_OS == .Darwin { @(require) foreign import stdcpp "system:stdc++" }
+LINK :: #config(TAGLIB_LINK, "shared")
+
 when ODIN_OS == .Windows {
-    foreign import TagLib "windows/tag_c.lib"
-} else when ODIN_OS == .Linux {
-    when ODIN_ARCH == .arm64 {
-        @(extra_linker_flags = "-lz")
-        @(require)foreign import cpp "linux-arm64/libtag.a"
-        foreign import TagLib "linux-arm64/libtag_c.a"
+    when LINK == "static" {
+        foreign import tl "windows/tag_c.lib"
     } else {
-        @(extra_linker_flags = "-lz")
-        @(require)foreign import cpp "linux/libtag.a"
-        foreign import TagLib "linux/libtag_c.a"
+        foreign import tl "windows/tag_c_shared.lib"
     }
-} else when ODIN_OS == .Darwin {
-    when ODIN_ARCH == .arm64 {
-        @(extra_linker_flags = "-lz")
-        @(require)foreign import cpp "darwin-arm64/libtag.a"
-        foreign import TagLib "darwin-arm64/libtag_c.a"
+} else {
+    when ODIN_OS == .Linux || ODIN_OS == .Darwin { @(require) foreign import _cpp "system:stdc++" }
+
+    when ODIN_OS == .Linux {
+        when LINK == "static" {
+            @(extra_linker_flags = "-lz")
+            @(require)foreign import _impl "libtag.linux.a"
+            foreign import tl "libtag_c.linux.a"
+        } else {
+            @(extra_linker_flags = "-lz")
+            foreign import tl "libtag_c.so"
+        }
+    } else when ODIN_OS == .Darwin {
+        when LINK == "static" {
+            @(extra_linker_flags = "-lz")
+            @(require)foreign import _impl "libtag.darwin.a"
+            foreign import tl "libtag_c.darwin.a"
+        } else {
+            @(extra_linker_flags = "-lz")
+            foreign import tl "libtag_c.dylib"
+        }
     }
 }
 
@@ -122,7 +133,7 @@ Complex_Property_Picture_Data :: struct {
 }
 
 @(link_prefix = "taglib_", default_calling_convention = "c")
-foreign TagLib {
+foreign tl {
     // Controls whether TagLib expects utf-8 (default) or Latin1 (ISO-8859-1) strings.
     set_strings_unicode :: proc(unicode: BOOL) ---
     // Controls tag string memory management by TagLib, enabled by default.
@@ -219,3 +230,4 @@ foreign TagLib {
     complex_property_free_keys :: proc(keys: ^cstring) ---
     complex_property_free :: proc(props: ^[^][^]Complex_Property_Attribute) ---
 }
+
