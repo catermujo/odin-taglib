@@ -1,33 +1,24 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-[ -d freetype ] || git clone --recurse-submodules --revision 23b6cd27ff19b70cbf98e058cd2cf0647d5284ff https://github.com/freetype/freetype --depth=1
+TAGLIB_REV="f4117f873c2cdc7b61553ae27df34364340a37ea"
+[ -d taglib ] || git clone --recurse-submodules --revision "$TAGLIB_REV" https://github.com/taglib/taglib --depth=1
 
-echo "Building freetype.."
-cd freetype
-./autogen.sh
-./configure --enable-shared=no --enable-year2038 --without-png --without-harfbuzz --without-bzip2 --without-brotli --without-gzip --with-zlib=no #--with-png=yes --with-harfbuzz=yes --with-librsvg=yes --with-brotli=yes # --with-bzip2=no
+echo "Building taglib (static).."
+cd taglib
+cmake -S . -B build_static \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DCMAKE_BUILD_TYPE=Release
 
 if [ $(uname -s) = 'Darwin' ]; then
     CPU=$(sysctl -n hw.ncpu)
-    LIB_EXT=darwin
+    OS_EXT=darwin
 else
     CPU=$(nproc)
-    LIB_EXT=linux
+    OS_EXT=linux
 fi
-# cmake -S . -B build \
-#     -DFT_REQUIRE_ZLIB=TRUE \
-#     -DFT_REQUIRE_PNG=TRUE \
-#     -DFT_REQUIRE_HARFBUZZ=TRUE \
-#     -DFT_REQUIRE_BROTLI=FALSE \
-#     -DCMAKE_BUILD_TYPE=Release
-# -DFT_DISABLE_ZLIB=TRUE \
-# -DFT_DISABLE_PNG=TRUE \
-# -DFT_DISABLE_HARFBUZZ=TRUE \
+cmake --build build_static -j"$CPU" --config Release
 
-# -DFT_DISABLE_BZIP2=FALSE \
-
-make -j$CPU
-
-cp objs/.libs/libfreetype.a ../freetype.$LIB_EXT.a
+cp build_static/taglib/*.a ../libtag."$OS_EXT".a
+cp build_static/bindings/c/*.a ../libtag_c."$OS_EXT".a

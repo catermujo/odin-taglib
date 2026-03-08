@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
+
+TAGLIB_REV="f4117f873c2cdc7b61553ae27df34364340a37ea"
 
 if [ $(uname -s) = 'Darwin' ]; then
     CPU=$(sysctl -n hw.ncpu)
@@ -8,29 +10,15 @@ else
     CPU=$(nproc)
 fi
 
-# [ -d brotli ] || git clone --recurse-submodules https://github.com/google/brotli.git --depth=1
+[ -d taglib ] || git clone --recurse-submodules --revision "$TAGLIB_REV" https://github.com/taglib/taglib --depth=1
 
-# cd brotli
-
-# emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBROTLI_EMSCRIPTEN=TRUE
-# emmake make -C build -j$CPU
-
-# cd ..
-
-[ -d freetype ] || git clone --recurse-submodules --revision 23b6cd27ff19b70cbf98e058cd2cf0647d5284ff https://github.com/freetype/freetype --depth=1
-
-cd freetype
-# -DBROTLIDEC_LIBRARIES="../brotli/build/libbrotlidec.a" \
-
-# TODO: better flags
-emcmake cmake -S . -B build \
-    -DFT_DISABLE_ZLIB=FALSE \
-    -DFT_DISABLE_PNG=FALSE \
-    -DFT_DISABLE_HARFBUZZ=FALSE \
-    -DFT_REQUIRE_BROTLI=FALSE \
+cd taglib
+emcmake cmake -S . -B build_wasm \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DWITH_ZLIB=OFF \
     -DCMAKE_BUILD_TYPE=Release
-# -DFT_DISABLE_BZIP2=FALSE \
 
-emmake make -C build -j$CPU
+cmake --build build_wasm -j"$CPU" --config Release
 
-cp build/libfreetype.a ../freetype.wasm.a
+cp build_wasm/taglib/*.a ../libtag.wasm.a
+cp build_wasm/bindings/c/*.a ../libtag_c.wasm.a
