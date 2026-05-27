@@ -21,6 +21,14 @@ clone_at_revision() {
 
 clone_at_revision taglib "$TAGLIB_REV" https://github.com/taglib/taglib --recurse-submodules --depth=1
 
+linux_arch_dir() {
+    case "$(uname -m)" in
+        x86_64 | amd64) echo "linux_x64" ;;
+        aarch64 | arm64) echo "linux_arm64" ;;
+        *) echo "linux_$(uname -m)" ;;
+    esac
+}
+
 echo "Building taglib (static).."
 cd taglib
 cmake -S . -B build_static \
@@ -33,8 +41,15 @@ if [ $(uname -s) = 'Darwin' ]; then
 else
     CPU=$(nproc)
     OS_EXT=linux
+    ARCH_DIR=$(linux_arch_dir)
 fi
 cmake --build build_static -j"$CPU" --config Release
 
-cp build_static/taglib/*.a ../libtag."$OS_EXT".a
-cp build_static/bindings/c/*.a ../libtag_c."$OS_EXT".a
+if [ "$(uname -s)" = 'Darwin' ]; then
+    cp build_static/taglib/*.a ../libtag."$OS_EXT".a
+    cp build_static/bindings/c/*.a ../libtag_c."$OS_EXT".a
+else
+    mkdir -p "../$ARCH_DIR"
+    cp build_static/taglib/*.a "../$ARCH_DIR/libtag.$OS_EXT.a"
+    cp build_static/bindings/c/*.a "../$ARCH_DIR/libtag_c.$OS_EXT.a"
+fi

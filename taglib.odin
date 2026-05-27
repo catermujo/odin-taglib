@@ -15,12 +15,27 @@ when ODIN_OS == .Windows {
 
     when ODIN_OS == .Linux {
         when LINK == "static" {
-            @(extra_linker_flags = "-lz")
-            @(require)foreign import _impl "libtag.linux.a"
-            foreign import tl "libtag_c.linux.a"
+            when ODIN_ARCH == .amd64 {
+                @(extra_linker_flags = "-lz")
+                @(require)foreign import _impl "linux_x64/libtag.linux.a"
+                foreign import tl "linux_x64/libtag_c.linux.a"
+            } else when ODIN_ARCH == .arm64 {
+                @(extra_linker_flags = "-lz")
+                @(require)foreign import _impl "linux_arm64/libtag.linux.a"
+                foreign import tl "linux_arm64/libtag_c.linux.a"
+            } else {
+                #panic("vendor/taglib static link supports only linux amd64/arm64")
+            }
         } else {
-            @(extra_linker_flags = "-lz")
-            foreign import tl "libtag_c.so"
+            when ODIN_ARCH == .amd64 {
+                @(extra_linker_flags = "-lz")
+                foreign import tl "linux_x64/libtag_c.so"
+            } else when ODIN_ARCH == .arm64 {
+                @(extra_linker_flags = "-lz")
+                foreign import tl "linux_arm64/libtag_c.so"
+            } else {
+                #panic("vendor/taglib shared link supports only linux amd64/arm64")
+            }
         }
     } else when ODIN_OS == .Darwin {
         when LINK == "static" {
@@ -230,4 +245,3 @@ foreign tl {
     complex_property_free_keys :: proc(keys: ^cstring) ---
     complex_property_free :: proc(props: ^[^][^]Complex_Property_Attribute) ---
 }
-
