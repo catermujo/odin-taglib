@@ -29,6 +29,14 @@ linux_arch_dir() {
     esac
 }
 
+darwin_arch_dir() {
+    case "$(uname -m)" in
+        x86_64 | amd64) echo "darwin_x64" ;;
+        aarch64 | arm64) echo "darwin_arm64" ;;
+        *) echo "darwin_$(uname -m)" ;;
+    esac
+}
+
 echo "Building taglib (static).."
 cd taglib
 cmake -S . -B build_static \
@@ -36,6 +44,8 @@ cmake -S . -B build_static \
     -DCMAKE_BUILD_TYPE=Release
 
 if [ $(uname -s) = 'Darwin' ]; then
+    ARCH_DIR=$(darwin_arch_dir)
+    mkdir -p "../$ARCH_DIR"
     CPU=$(sysctl -n hw.ncpu)
     OS_EXT=darwin
 else
@@ -46,8 +56,8 @@ fi
 cmake --build build_static -j"$CPU" --config Release
 
 if [ "$(uname -s)" = 'Darwin' ]; then
-    cp build_static/taglib/*.a ../libtag."$OS_EXT".a
-    cp build_static/bindings/c/*.a ../libtag_c."$OS_EXT".a
+    cp build_static/taglib/*.a "../$ARCH_DIR/libtag.$OS_EXT.a"
+    cp build_static/bindings/c/*.a "../$ARCH_DIR/libtag_c.$OS_EXT.a"
 else
     mkdir -p "../$ARCH_DIR"
     cp build_static/taglib/*.a "../$ARCH_DIR/libtag.$OS_EXT.a"

@@ -5,10 +5,20 @@ import "core:c"
 LINK :: #config(TAGLIB_LINK, "shared")
 
 when ODIN_OS == .Windows {
-    when LINK == "static" {
-        foreign import tl "windows/tag_c.lib"
+    when ODIN_ARCH == .amd64 {
+        when LINK == "static" {
+            foreign import tl "windows_x64/tag_c.lib"
+        } else {
+            foreign import tl "windows_x64/tag_c_shared.lib"
+        }
+    } else when ODIN_ARCH == .arm64 {
+        when LINK == "static" {
+            foreign import tl "windows_arm64/tag_c.lib"
+        } else {
+            foreign import tl "windows_arm64/tag_c_shared.lib"
+        }
     } else {
-        foreign import tl "windows/tag_c_shared.lib"
+        #panic("vendor/taglib supports windows amd64/arm64 only")
     }
 } else {
     when ODIN_OS == .Linux || ODIN_OS == .Darwin { @(require) foreign import _cpp "system:stdc++" }
@@ -38,13 +48,26 @@ when ODIN_OS == .Windows {
             }
         }
     } else when ODIN_OS == .Darwin {
-        when LINK == "static" {
-            @(extra_linker_flags = "-lz")
-            @(require)foreign import _impl "libtag.darwin.a"
-            foreign import tl "libtag_c.darwin.a"
+        when ODIN_ARCH == .amd64 {
+            when LINK == "static" {
+                @(extra_linker_flags = "-lz")
+                @(require)foreign import _impl "darwin_x64/libtag.darwin.a"
+                foreign import tl "darwin_x64/libtag_c.darwin.a"
+            } else {
+                @(extra_linker_flags = "-lz")
+                foreign import tl "darwin_x64/libtag_c.dylib"
+            }
+        } else when ODIN_ARCH == .arm64 {
+            when LINK == "static" {
+                @(extra_linker_flags = "-lz")
+                @(require)foreign import _impl "darwin_arm64/libtag.darwin.a"
+                foreign import tl "darwin_arm64/libtag_c.darwin.a"
+            } else {
+                @(extra_linker_flags = "-lz")
+                foreign import tl "darwin_arm64/libtag_c.dylib"
+            }
         } else {
-            @(extra_linker_flags = "-lz")
-            foreign import tl "libtag_c.dylib"
+            #panic("vendor/taglib supports Darwin amd64/arm64 only")
         }
     }
 }
